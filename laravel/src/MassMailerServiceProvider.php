@@ -13,6 +13,7 @@ use Peppermint\MassMailer\Contracts\Kaskade;
 use Peppermint\MassMailer\Contracts\Mailgunzugang;
 use Peppermint\MassMailer\Contracts\Sperrliste;
 use Peppermint\MassMailer\Listeners\ProtokolliertVersand;
+use Peppermint\MassMailer\Services\Kampagnenauswertung;
 use Peppermint\MassMailer\Services\MailgunKonto;
 use Peppermint\MassMailer\Services\MailgunZustellabgleich;
 use Peppermint\MassMailer\Services\Mailmessung;
@@ -58,6 +59,7 @@ class MassMailerServiceProvider extends ServiceProvider
         $this->app->singleton(Massenversand::class);
 
         $this->app->singleton(MailgunKonto::class);
+        $this->app->singleton(Kampagnenauswertung::class);
         $this->app->singleton(MailgunZustellabgleich::class);
     }
 
@@ -83,6 +85,15 @@ class MassMailerServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../config/mass-mailer.php' => config_path('mass-mailer.php'),
             ], 'mass-mailer-config');
+
+            // Die Oberflaechen sind Vorlagen, keine Bausteine: Sie werden in
+            // die Anwendung KOPIERT und dort geaendert. Ein Paket-Formular, das
+            // sich beim naechsten `composer update` unter der Hand anders
+            // verhaelt, waere in einer Maske, die jemand taeglich benutzt, das
+            // Gegenteil von hilfreich.
+            $this->publishes([
+                __DIR__.'/../stubs/react-shadcn/components/' => resource_path('js/components/'),
+            ], 'mass-mailer-react');
         }
     }
 

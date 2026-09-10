@@ -9,6 +9,7 @@ class InstallCommand extends Command
 {
     protected $signature = 'mass-mailer:install
         {--no-migration : Migration nicht erzeugen.}
+        {--react : Die Oberflaechen-Vorlagen nach resources/js/components/ kopieren.}
         {--force : Vorhandene publizierte Dateien ueberschreiben.}';
 
     protected $description = 'Installiert peppermint/mass-mailer: Konfiguration publizieren, Migration erzeugen, naechste Schritte zeigen.';
@@ -18,6 +19,10 @@ class InstallCommand extends Command
         $this->components->info('peppermint/mass-mailer — Installation');
 
         $this->configPublizieren();
+
+        if ($this->option('react')) {
+            $this->oberflaechenPublizieren();
+        }
 
         if (! $this->option('no-migration')) {
             $this->migrationErzeugen();
@@ -33,6 +38,25 @@ class InstallCommand extends Command
     private function configPublizieren(): void
     {
         $args = ['--tag' => 'mass-mailer-config'];
+
+        if ($this->option('force')) {
+            $args['--force'] = true;
+        }
+
+        $this->call('vendor:publish', $args);
+    }
+
+    /**
+     * Kopiert die drei Oberflaechen-Vorlagen in die Anwendung.
+     *
+     * Vorlagen und keine Bausteine: Sie gehoeren nach dem Kopieren der
+     * Anwendung, samt Layout, Routen und Benennung. Ein Formular, das sich beim
+     * naechsten `composer update` unter der Hand anders verhaelt, waere in
+     * einer Maske, die jemand taeglich benutzt, das Gegenteil von hilfreich.
+     */
+    private function oberflaechenPublizieren(): void
+    {
+        $args = ['--tag' => 'mass-mailer-react'];
 
         if ($this->option('force')) {
             $args['--force'] = true;
@@ -84,6 +108,10 @@ class InstallCommand extends Command
         $this->line('  2. Optional: Bezugsaufloeser binden (wer steckt hinter einer Adresse?).');
         $this->line('  3. Optional: Sperrliste binden (wohin mit einer toten Adresse?).');
         $this->line('  4. Fuer den Zustellabgleich: MAILGUN_SECRET und MAILGUN_DOMAIN setzen.');
+
+        if (! $this->option('react')) {
+            $this->line('  5. Oberflaechen-Vorlagen holen: `--react` (Postausgang, Protokoll, Auswertung).');
+        }
         $this->newLine();
         $this->line('  Die README zeigt zu jedem Punkt ein Beispiel.');
     }

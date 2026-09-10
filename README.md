@@ -19,9 +19,10 @@ unabhängig voneinander benutzbar und ergänzen sich, wo beide da sind.
 | **Eigener Postausgang** | Ein SMTP-Zugang je Ebene der Kaskade, Zugangsdaten verschlüsselt. Abgeschaltete Einträge fallen auf die nächste Stufe zurück. |
 | **Drosselung** | Versandtempo je Stunde über dieselbe Kaskade, gleichmäßig über die Stunde verteilt — und kampagnenübergreifend reserviert, damit sich zwei Versendungen nicht überholen. |
 | **Kampagnen** | Was an wen rausging und was tatsächlich drinstand — eine Kopie zum Zeitpunkt des Versands, keine Referenz auf die Vorlage. |
+| **Auswertung** | Die Bilanz eines Versands: Zustellquote, Rückläufer getrennt nach dauerhaft und vorübergehend, Tempo, häufigste Meldungen. |
+| **Oberflächen** | Drei React-Vorlagen (shadcn/ui, Inertia) zum Kopieren: Postausgang, Protokoll, Auswertung. |
 
-**Noch nicht drin** (kommt in den nächsten Stufen): Oberflächen-Stubs, Newsletter mit
-An- und Abmeldung.
+**Noch nicht drin**: Newsletter mit An- und Abmeldung.
 
 ## Warum die Klassennamen deutsch sind
 
@@ -282,6 +283,67 @@ $proStunde = $plan->proStunde($event);   // einmal holen, nicht je Empfänger �
                                           // sonst läuft pro Mail eine Abfrage
                                           // über die ganze Kaskade
 ```
+
+## Auswertung einer Kampagne
+
+Die Zahlen, mit denen sich ein Versand beurteilen lässt, ohne 2500 Zeilen zu scrollen:
+
+```php
+return Inertia::render('Kampagnen/Show', [
+    'campaign' => $kampagne->only(['id', 'betreff', 'empfaenger_anzahl', 'gestartet_am']),
+    ...app(Kampagnenauswertung::class)->fuer($kampagne),
+]);
+```
+
+Vier Schlüssel kommen zurück: `summary` (unser Stand), `zustellung` (was der Anbieter
+sagt), `auswertung` (die Bilanz) und `versuche` (woran Sendeversuche scheiterten).
+
+Drei Trennungen darin sind der eigentliche Inhalt, und jede hat einen Anlass:
+
+- **`status` und `zustellung_status` sind zwei Fragen.** „Verschickt" heißt angenommen,
+  „zugestellt" heißt angekommen. Die Lücke dazwischen ist die Zahl, nach der jemand sucht,
+  der eine Beschwerde bearbeitet.
+- **Dauerhafte und vorübergehende Rückläufer werden nie addiert.** Am 04.09.2026 meldete
+  Mailgun 114 Fehlschläge, von denen 96 bloßes Graylisting waren — zusammengezählt sah ein
+  gesunder Versand kaputt aus.
+- **Sendeversuche sind kein Zustellproblem.** Ein gescheiterter Versuch liegt zwischen dir
+  und deinem Postausgang, eine gescheiterte Zustellung zwischen Postausgang und Empfänger.
+
+`zustellung['verbunden']` sagt, ob überhaupt gemessen wurde. Ist es `false`, soll die
+Oberfläche die Spalte weglassen statt „0 zugestellt" zu behaupten.
+
+Öffnungen und Klicks fehlen bewusst. Eine „Öffnung" ist ein geladenes Zählbild — neben
+einer Zustellquote gleichrangig gezeigt, lädt sie zu Schlüssen ein, die die Zahl nicht
+hergibt.
+
+## Oberflächen
+
+Drei fertige React-Vorlagen (shadcn/ui, Inertia) liegen im Paket:
+
+```bash
+php artisan mass-mailer:install --react
+# oder später
+php artisan vendor:publish --tag=mass-mailer-react
+```
+
+| Datei | Wofür |
+|---|---|
+| `mass-mailer-postausgang-form.tsx` | Server, Zugangsdaten und Absender einer Ebene |
+| `mass-mailer-protokoll.tsx` | Was an wen rausging und was daraus wurde |
+| `mass-mailer-auswertung.tsx` | Die Bilanz eines Versands |
+
+**Vorlagen, keine Bausteine.** Sie werden in `resources/js/components/` kopiert und
+gehören danach dir — Layout, Routen und Benennung sind in jeder Anwendung anders. Ein
+Paket-Formular, das sich beim nächsten `composer update` unter der Hand anders verhält,
+wäre in einer Maske, die jemand täglich benutzt, das Gegenteil von hilfreich.
+
+Zwei Stellen sind ausdrücklich zum Ausfüllen gedacht:
+
+- `bezugLabel` am Protokoll — das Paket weiß nicht, wie eine Anmeldung, ein Lead oder ein
+  Kundenkontakt bei dir heißt. Ohne diese Funktion zeigt die Tabelle den rohen Typ.
+- Das leere Passwortfeld im Postausgang heißt **„nicht ändern"**. Dein Endpunkt muss das
+  so behandeln — sonst müsste man das Passwort bei jeder Korrektur am Port neu eintippen,
+  und irgendwann tippt jemand daneben.
 
 ## Zustellabgleich einplanen
 
