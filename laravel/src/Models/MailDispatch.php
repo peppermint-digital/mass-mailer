@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Peppermint\MassMailer\Support\MassMailerSchema;
+use Peppermint\MassMailer\Support\Modelle;
 
 /**
  * Eine verschickte Mail — der Nachweis, was an wen rausgegangen ist.
@@ -112,7 +113,7 @@ class MailDispatch extends Model
      */
     public function getTable(): string
     {
-        return config('mass-mailer.tabellen.protokoll', MassMailerSchema::TABELLE_PROTOKOLL);
+        return MassMailerSchema::tabelle('protokoll', MassMailerSchema::TABELLE_PROTOKOLL);
     }
 
     /**
@@ -152,7 +153,7 @@ class MailDispatch extends Model
      */
     public function sendeversuche(): HasMany
     {
-        return $this->hasMany(MailDispatchVersuch::class, 'mail_dispatch_id')
+        return $this->hasMany(Modelle::versuch(), 'mail_dispatch_id')
             ->orderBy('nummer');
     }
 

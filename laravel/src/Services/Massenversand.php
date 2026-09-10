@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Mail;
 use Peppermint\MassMailer\Models\Versandkampagne;
 use Peppermint\MassMailer\Support\Empfaenger;
 use Peppermint\MassMailer\Support\Kampagnenentwurf;
+use Peppermint\MassMailer\Support\Modelle;
 
 /**
  * Verschickt eine Mail an viele — gedrosselt und nachvollziehbar.
@@ -103,7 +104,9 @@ class Massenversand
 
     private function kampagneAnlegen(Kampagnenentwurf $entwurf, int $anzahl): Versandkampagne
     {
-        return Versandkampagne::create([
+        $kampagne = Modelle::kampagne();
+
+        return $kampagne::create([
             'mandant_id' => $entwurf->mandantId ?? $this->mandantAusBereich($entwurf),
             'bereich_typ' => $entwurf->bereich?->getMorphClass(),
             'bereich_id' => $entwurf->bereich?->getKey(),
@@ -131,7 +134,8 @@ class Massenversand
             return null;
         }
 
-        $spalte = (string) config('mass-mailer.mandant.spalte', 'organization_id');
+        $spalte = config('mass-mailer.mandant.spalte');
+        $spalte = is_string($spalte) && $spalte !== '' ? $spalte : 'organization_id';
 
         $wert = $entwurf->bereich->getAttribute($spalte);
 

@@ -8,6 +8,7 @@ use Peppermint\MassMailer\Contracts\Sperrliste;
 use Peppermint\MassMailer\Models\MailDispatch;
 use Peppermint\MassMailer\Models\MailDispatchVersuch;
 use Peppermint\MassMailer\Support\Metadatenschluessel;
+use Peppermint\MassMailer\Support\Modelle;
 use Peppermint\MassMailer\Support\Zustellfehler;
 use Symfony\Component\Mailer\Header\MetadataHeader;
 use Symfony\Component\Mime\Email;
@@ -99,7 +100,7 @@ class Versandprotokoll
         $spalten = $this->spalten($metadaten, $empfaenger, $nachricht->getSubject());
 
         $eintrag = $this->offeneZeileZu($spalten)
-            ?? MailDispatch::create($spalten);
+            ?? Modelle::anlegen($spalten);
 
         // Jeder Anlauf bekommt seine eigene Spur. Die Zeile sagt, was aus der
         // Mail wurde; erst die Versuche sagen, wie oft es dafuer gebraucht hat
@@ -153,7 +154,7 @@ class Versandprotokoll
     {
         $fenster = (int) config('mass-mailer.protokoll.wiederholungsfenster_stunden', 24);
 
-        return MailDispatch::query()
+        return Modelle::protokollAbfrage()
             ->where('empfaenger', $spalten['empfaenger'])
             ->where('status', MailDispatch::STATUS_IM_VERSAND)
             ->where('art', $spalten['art'])
@@ -193,7 +194,9 @@ class Versandprotokoll
 
         $eintrag->forceFill(['versuche' => $nummer])->save();
 
-        MailDispatchVersuch::create([
+        $versuch = Modelle::versuch();
+
+        $versuch::create([
             'mail_dispatch_id' => $eintrag->id,
             'nummer' => $nummer,
             'begonnen_am' => now(),
@@ -266,7 +269,7 @@ class Versandprotokoll
         ?string $betreff = null,
     ): void {
         $eintrag ??= $empfaenger !== null
-            ? MailDispatch::query()
+            ? Modelle::protokollAbfrage()
                 ->where('empfaenger', $empfaenger)
                 ->where('status', MailDispatch::STATUS_IM_VERSAND)
                 ->latest('id')
@@ -280,7 +283,7 @@ class Versandprotokoll
         // real passiert: zwei kaputte Adressen aus einem Import, beide
         // unsichtbar.
         $eintrag ??= $empfaenger !== null
-            ? MailDispatch::create($this->spalten($metadaten, $empfaenger, $betreff))
+            ? Modelle::anlegen($this->spalten($metadaten, $empfaenger, $betreff))
             : null;
 
         $meldung = $this->lesbar($fehler);
@@ -344,7 +347,7 @@ class Versandprotokoll
             return null;
         }
 
-        return MailDispatch::query()->find((int) $kopfzeile->getBodyAsString());
+        return Modelle::protokollAbfrage()->find((int) $kopfzeile->getBodyAsString());
     }
 
     /**

@@ -6,6 +6,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Log;
 use Peppermint\MassMailer\Contracts\Sperrliste;
 use Peppermint\MassMailer\Models\MailDispatch;
+use Peppermint\MassMailer\Support\Modelle;
 use Peppermint\MassMailer\Support\Zustellfehler;
 use Throwable;
 
@@ -112,7 +113,7 @@ class MailgunZustellabgleich
         $nummer = $ereignis['user-variables'][app(Versandprotokoll::class)->mailgunSchluessel()] ?? null;
 
         if ($nummer !== null && ctype_digit((string) $nummer)) {
-            return MailDispatch::query()->find((int) $nummer);
+            return Modelle::protokollAbfrage()->find((int) $nummer);
         }
 
         $empfaenger = trim((string) ($ereignis['recipient'] ?? ''));
@@ -122,7 +123,7 @@ class MailgunZustellabgleich
             return null;
         }
 
-        $treffer = MailDispatch::query()
+        $treffer = Modelle::protokollAbfrage()
             ->where('empfaenger', $empfaenger)
             ->whereNull('zustellung_status')
             ->whereBetween('created_at', [

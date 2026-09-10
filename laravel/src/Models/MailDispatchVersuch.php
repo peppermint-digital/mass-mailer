@@ -44,7 +44,7 @@ class MailDispatchVersuch extends Model
 
     public function getTable(): string
     {
-        return config('mass-mailer.tabellen.versuche', MassMailerSchema::TABELLE_VERSUCHE);
+        return MassMailerSchema::tabelle('versuche', MassMailerSchema::TABELLE_VERSUCHE);
     }
 
     /** @return BelongsTo<MailDispatch, $this> */

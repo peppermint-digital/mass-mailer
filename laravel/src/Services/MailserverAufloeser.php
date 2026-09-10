@@ -7,6 +7,7 @@ use Illuminate\Mail\Mailer;
 use Illuminate\Support\Facades\Mail;
 use Peppermint\MassMailer\Contracts\Kaskade;
 use Peppermint\MassMailer\Models\MailServer;
+use Peppermint\MassMailer\Support\Modelle;
 
 /**
  * Beantwortet die eine Frage, die der Versand stellen muss: „Ueber welchen
@@ -76,7 +77,9 @@ class MailserverAufloeser
 
     private function benutzbarer(Model $ebene): ?MailServer
     {
-        $server = MailServer::query()
+        $postausgang = Modelle::postausgang();
+
+        $server = $postausgang::query()
             ->where('owner_type', $ebene->getMorphClass())
             ->where('owner_id', $ebene->getKey())
             ->first();

@@ -143,6 +143,27 @@ Ohne eigene Bindung liest das Paket `mass-mailer.mailgun.*` und fällt auf Larav
 `services.mailgun.*` zurück. Wer sie in der Datenbank pflegt (damit ein Kontowechsel kein
 Deploy ist), bindet eine eigene Fassung.
 
+## Eigene Modellklassen
+
+Braucht ein Modell etwas, das nur die Anwendung kennt — einen Mandanten-Scope etwa —,
+erbt sie von der Paket-Klasse und trägt ihre eigene in `mass-mailer.modelle` ein:
+
+```php
+class MailDispatch extends \Peppermint\MassMailer\Models\MailDispatch
+{
+    use BelongsToOrganization;
+}
+```
+
+Das Paket benutzt dann durchgehend die eingetragene — beim Anlegen, in Abfragen und in
+den Beziehungen.
+
+**Abfragen laufen dabei ohne globale Scopes.** Das ist nötig, nicht bequem: Das Protokoll
+entsteht im Queue-Worker, und dort ist kein Mandant aktiv. Ein Mandanten-Scope würde die
+Bestätigung ihre eigene Zeile nicht wiederfinden lassen, und der Eintrag bliebe für immer
+auf „im Versand". Beim **Anlegen** gilt das Gegenteil: Da soll der Haken der Anwendung
+greifen und den Mandanten eintragen — deshalb geht das Anlegen den normalen Weg.
+
 ## Zwei Dinge, die man beim Einziehen falsch machen kann
 
 **Der Mailgun-Variablenschlüssel.** Unter ihm reist die Nummer der Protokollzeile mit;

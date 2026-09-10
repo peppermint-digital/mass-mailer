@@ -64,7 +64,10 @@ class VersandtempoAufloeser
      */
     public function anEbene(Model $ebene): ?int
     {
-        $spalte = (string) config('mass-mailer.tempo.spalte', 'mail_rate_per_hour');
+        // Ein leerer Eintrag darf nicht in `getAttribute('')` muenden — das
+        // gaebe still `null` und damit fuer jede Ebene „kein Tempo hinterlegt".
+        $spalte = config('mass-mailer.tempo.spalte');
+        $spalte = is_string($spalte) && $spalte !== '' ? $spalte : 'mail_rate_per_hour';
 
         $wert = $ebene->getAttribute($spalte);
 

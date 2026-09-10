@@ -71,7 +71,7 @@ class MailServer extends Model
 
     public function getTable(): string
     {
-        return config('mass-mailer.tabellen.postausgaenge', MassMailerSchema::TABELLE_POSTAUSGAENGE);
+        return MassMailerSchema::tabelle('postausgaenge', MassMailerSchema::TABELLE_POSTAUSGAENGE);
     }
 
     /** @return MorphTo<Model, $this> */

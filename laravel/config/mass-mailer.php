@@ -1,5 +1,10 @@
 <?php
 
+use Peppermint\MassMailer\Models\MailDispatch;
+use Peppermint\MassMailer\Models\MailDispatchVersuch;
+use Peppermint\MassMailer\Models\MailServer;
+use Peppermint\MassMailer\Models\Versandkampagne;
+
 return [
 
     /*
@@ -35,6 +40,33 @@ return [
 
     'mandant' => [
         'spalte' => env('MASS_MAILER_MANDANT_SPALTE', 'organization_id'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Modellklassen
+    |--------------------------------------------------------------------------
+    |
+    | Braucht ein Modell etwas, das nur die Anwendung kennt — einen
+    | Mandanten-Scope etwa —, erbt sie von der Paket-Klasse und traegt ihre
+    | eigene hier ein. Das Paket benutzt dann durchgehend die eingetragene.
+    |
+    |     class MailDispatch extends \Peppermint\MassMailer\Models\MailDispatch
+    |     {
+    |         use BelongsToOrganization;
+    |     }
+    |
+    | Ueber die Konfiguration und nicht ueber den Container, weil es nicht um
+    | eine Instanz geht, sondern um Abfragen: `::query()`, `::create()`,
+    | `hasMany(...)`. Eine Container-Bindung loest davon nur den Konstruktor auf.
+    |
+    */
+
+    'modelle' => [
+        'protokoll' => MailDispatch::class,
+        'versuch' => MailDispatchVersuch::class,
+        'postausgang' => MailServer::class,
+        'kampagne' => Versandkampagne::class,
     ],
 
     /*

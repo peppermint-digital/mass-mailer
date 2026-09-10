@@ -47,6 +47,22 @@ class MassMailerSchema
     public const TABELLE_KAMPAGNEN = 'mass_email_campaigns';
 
     /**
+     * Der eingetragene Tabellenname — oder die Vorgabe.
+     *
+     * **Nicht `config($schluessel, $vorgabe)`.** Laravels zweites Argument
+     * greift nur, wenn der Schluessel FEHLT — nicht, wenn er da ist und `null`
+     * enthaelt. Eine ausgeleerte Zeile in der publizierten Konfiguration
+     * ergaebe sonst eine Abfrage gegen die Tabelle `` — und die Fehlermeldung
+     * zeigt auf die Datenbank statt auf die Konfiguration.
+     */
+    public static function tabelle(string $name, string $vorgabe): string
+    {
+        $wert = config('mass-mailer.tabellen.'.$name);
+
+        return is_string($wert) && $wert !== '' ? $wert : $vorgabe;
+    }
+
+    /**
      * Die Protokolltabelle: eine Zeile je verschickter Mail.
      *
      * Fast alles ist `nullable`, und das ist keine Nachlaessigkeit. Nicht jede

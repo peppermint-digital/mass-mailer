@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Peppermint\MassMailer\Support\Empfaenger;
 use Peppermint\MassMailer\Support\MassMailerSchema;
 use Peppermint\MassMailer\Support\Metadatenschluessel;
+use Peppermint\MassMailer\Support\Modelle;
 
 /**
  * Ein Massenversand — was an wen rausging, und was tatsaechlich drinstand.
@@ -46,7 +47,7 @@ class Versandkampagne extends Model
 
     public function getTable(): string
     {
-        return config('mass-mailer.tabellen.kampagnen', MassMailerSchema::TABELLE_KAMPAGNEN);
+        return MassMailerSchema::tabelle('kampagnen', MassMailerSchema::TABELLE_KAMPAGNEN);
     }
 
     /** @return MorphTo<Model, $this> */
@@ -62,7 +63,7 @@ class Versandkampagne extends Model
      */
     public function dispatches(): HasMany
     {
-        return $this->hasMany(MailDispatch::class, 'kampagne_id');
+        return $this->hasMany(Modelle::protokoll(), 'kampagne_id');
     }
 
     /**
