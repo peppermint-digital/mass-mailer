@@ -1,0 +1,54 @@
+{
+    "name": "peppermint/mass-mailer",
+    "description": "Massenversand fuer Laravel: Versandprotokoll, Rueckläufer-Behandlung, Zustellabgleich mit Mailgun, Oeffnungs- und Klickmessung. Ergaenzt peppermint/mail-builder — der baut die Mail, dieses Paket bringt sie raus und sagt, was daraus geworden ist.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Peppermint Digital"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/support": "^11.0|^12.0|^13.0",
+        "illuminate/database": "^11.0|^12.0|^13.0",
+        "illuminate/http": "^11.0|^12.0|^13.0",
+        "illuminate/mail": "^11.0|^12.0|^13.0",
+        "illuminate/queue": "^11.0|^12.0|^13.0",
+        "nesbot/carbon": "^2.0|^3.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0|^11.0",
+        "pestphp/pest": "^3.0|^4.0",
+        "laravel/pint": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Peppermint\\MassMailer\\": "laravel/src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Peppermint\\MassMailer\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Peppermint\\MassMailer\\MassMailerServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "lint": "pint"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

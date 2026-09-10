@@ -1,0 +1,49 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Peppermint\MassMailer\Support\MassMailerSchema;
+
+/**
+ * Die beiden Protokolltabellen des Massenversands.
+ *
+ * Diese Migration liegt bewusst IN der Anwendung und nicht im Paket: Sie
+ * veraendert deine Datenbank, also gehoert sie in dein Repository, wo sie
+ * gelesen und versioniert wird.
+ *
+ * ## Fremdschluessel
+ *
+ * Das Paket setzt keine — es kennt weder deine Tabellennamen noch deine
+ * Loeschregeln. Wenn du welche willst, haenge sie unten an. Dabei
+ * `nullOnDelete()` und NICHT `cascadeOnDelete()`: Wird ein Empfaenger
+ * geloescht, ist die Frage „was ist damals rausgegangen?" nicht erledigt,
+ * sondern erst recht interessant. Die Adresse steht ohnehin als Text daneben.
+ */
+return new class extends Migration
+{
+    public function up(): void
+    {
+        // Geschuetzt, damit ein zweiter Lauf gegen eine bestehende Datenbank
+        // nichts kaputtmacht — etwa in einer Anwendung, die diese Tabellen
+        // schon vor dem Paket hatte.
+        if (! Schema::hasTable('{{ protokoll }}')) {
+            Schema::create('{{ protokoll }}', function (Blueprint $table): void {
+                MassMailerSchema::protokollTabelle($table);
+            });
+        }
+
+        if (! Schema::hasTable('{{ versuche }}')) {
+            Schema::create('{{ versuche }}', function (Blueprint $table): void {
+                MassMailerSchema::versucheTabelle($table, '{{ protokoll }}');
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        // Die Versuche zuerst — sie haengen per Fremdschluessel am Protokoll.
+        Schema::dropIfExists('{{ versuche }}');
+        Schema::dropIfExists('{{ protokoll }}');
+    }
+};
