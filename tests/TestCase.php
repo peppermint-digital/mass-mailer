@@ -38,5 +38,9 @@ abstract class TestCase extends Basis
         Schema::create(MassMailerSchema::TABELLE_VERSUCHE, function (Blueprint $table): void {
             MassMailerSchema::versucheTabelle($table);
         });
+
+        Schema::create(MassMailerSchema::TABELLE_POSTAUSGAENGE, function (Blueprint $table): void {
+            MassMailerSchema::postausgangTabelle($table);
+        });
     }
 }

@@ -16,9 +16,11 @@ unabhängig voneinander benutzbar und ergänzen sich, wo beide da sind.
 | **Zustellabgleich** | Holt bei Mailgun nach, was aus den Mails geworden ist. Per Abfrage, nicht per Webhook — die Abfrage kann Vergangenheit nachholen. |
 | **Kontozustand** | Ist die Domain gesperrt, wie viele Mails gingen in der letzten Stunde raus. Die Zahl, die vor einer Tempoerhöhung fehlt. |
 | **Öffnungen und Klicks** | Zählpixel und Klick-Umleitung, je Mail schaltbar, standardmäßig aus. |
+| **Eigener Postausgang** | Ein SMTP-Zugang je Ebene der Kaskade, Zugangsdaten verschlüsselt. Abgeschaltete Einträge fallen auf die nächste Stufe zurück. |
+| **Drosselung** | Versandtempo je Stunde über dieselbe Kaskade, gleichmäßig über die Stunde verteilt — und kampagnenübergreifend reserviert, damit sich zwei Versendungen nicht überholen. |
 
-**Noch nicht drin** (kommt in den nächsten Stufen): Postausgangs-Kaskade, Versandtempo
-und -plan, Kampagnen, Oberflächen-Stubs, Newsletter mit An- und Abmeldung.
+**Noch nicht drin** (kommt in den nächsten Stufen): Kampagnen, Oberflächen-Stubs,
+Newsletter mit An- und Abmeldung.
 
 ## Warum die Klassennamen deutsch sind
 
@@ -74,9 +76,9 @@ Veranstaltung) — danach wird gefiltert und ausgewertet. Der Bezug ist, *um wen
 Ohne Metadaten entsteht die Zeile trotzdem. **Eine magere Zeile ist besser als eine
 fehlende.**
 
-## Die drei optionalen Verträge
+## Die vier optionalen Verträge
 
-Alle drei sind freiwillig. Ohne sie funktioniert das Paket vollständig — es trägt dann
+Alle vier sind freiwillig. Ohne sie funktioniert das Paket vollständig — es trägt dann
 nur weniger ein.
 
 ### `Bezugsaufloeser` — wer steckt hinter einer Adresse?
@@ -108,6 +110,31 @@ hingehört, weiß nur die Anwendung.
 Nicht am Bezug festmachen: In Connect ist der Bezug eine *Anmeldung*, die Adresse gehört
 aber der *Person* und gilt für jede künftige Veranstaltung. Hinge es an der Anmeldung,
 schriebe man dieselbe kaputte Adresse bei der nächsten Einladung wieder an.
+
+### `Kaskade` — wen frage ich zuerst?
+
+Postausgang und Versandtempo laufen **dieselbe** Kette ab, von speziell nach allgemein.
+Die erste Stufe mit einer Antwort gewinnt; antwortet keine, gilt die Weltkonfiguration.
+
+Ohne Bindung gilt `EinstufigeKaskade`: der Bereich selbst und sonst nichts. Wer eine
+Hierarchie hat, bindet seine eigene:
+
+```php
+$this->app->bind(Kaskade::class, fn () => new class implements Kaskade {
+    public function ebenen(?Model $bereich): array
+    {
+        return $bereich instanceof Event
+            ? array_values(array_filter([$bereich, $bereich->organization]))
+            : [];
+    }
+});
+```
+
+Eine Kette und nicht drei — sonst kann sich niemand merken, welche wo gilt.
+
+Das Tempo liest das Paket per `getAttribute` aus einem konfigurierbaren Feld
+(`mass-mailer.tempo.spalte`, Vorgabe `mail_rate_per_hour`). Fehlt es an einer Ebene,
+übernimmt die nächste. Nicht jede Ebene muss das Tempo kennen.
 
 ### `Mailgunzugang` — woher die Zugangsdaten kommen
 
@@ -143,6 +170,30 @@ Zu den Zahlen: **Klicks** sind eine Handlung des Empfängers und damit belastbar
 **Öffnungen** sind ein geladenes Bild — Apple Mail lädt seit 2021 alle Bilder vorab,
 Gmail über einen Proxy, andere Programme laden sie gar nicht. Die Zahl liegt systematisch
 zu hoch *und* zu niedrig, je nach Postfach. Wer sie anzeigt, sollte das dazusagen.
+
+## Drosselung benutzen
+
+```php
+$plan = app(Versandplan::class);
+
+$start = $plan->reservieren($event, $empfaenger->count());
+$proStunde = $plan->proStunde($event);
+
+foreach ($empfaenger as $i => $person) {
+    Mail::to($person->email)->later(
+        $start->addSeconds($plan->versatzInSekunden($i, $proStunde)),
+        new Rundmail(...),
+    );
+}
+```
+
+`reservieren()` merkt sich je **Postausgang**, bis wann eingereiht ist, und die nächste
+Kampagne setzt dort an. Der Schlüssel hängt bewusst am Mailserver und nicht am Bereich:
+Das Limit gehört dem Server. Zwei Bereiche, die sich einen teilen, teilen sich das
+Kontingent — zwei mit eigenen Servern stehen sich nicht im Weg.
+
+`proStunde()` einmal holen und durchreichen, nicht je Empfänger nachschlagen — sonst
+läuft pro Mail eine Abfrage über die ganze Kaskade.
 
 ## Zustellabgleich einplanen
 

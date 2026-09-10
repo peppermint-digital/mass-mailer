@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 use Peppermint\MassMailer\Support\MassMailerSchema;
 
 /**
- * Die beiden Protokolltabellen des Massenversands.
+ * Die Tabellen des Massenversands: Protokoll, Sendeversuche, Postausgaenge.
  *
  * Diese Migration liegt bewusst IN der Anwendung und nicht im Paket: Sie
  * veraendert deine Datenbank, also gehoert sie in dein Repository, wo sie
@@ -38,11 +38,19 @@ return new class extends Migration
                 MassMailerSchema::versucheTabelle($table, '{{ protokoll }}');
             });
         }
+
+        if (! Schema::hasTable('{{ postausgaenge }}')) {
+            Schema::create('{{ postausgaenge }}', function (Blueprint $table): void {
+                MassMailerSchema::postausgangTabelle($table);
+            });
+        }
     }
 
     public function down(): void
     {
-        // Die Versuche zuerst — sie haengen per Fremdschluessel am Protokoll.
+        Schema::dropIfExists('{{ postausgaenge }}');
+
+        // Die Versuche vor dem Protokoll — sie haengen per Fremdschluessel daran.
         Schema::dropIfExists('{{ versuche }}');
         Schema::dropIfExists('{{ protokoll }}');
     }

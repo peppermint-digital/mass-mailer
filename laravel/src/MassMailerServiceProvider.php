@@ -9,13 +9,18 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Peppermint\MassMailer\Console\InstallCommand;
 use Peppermint\MassMailer\Contracts\Bezugsaufloeser;
+use Peppermint\MassMailer\Contracts\Kaskade;
 use Peppermint\MassMailer\Contracts\Mailgunzugang;
 use Peppermint\MassMailer\Contracts\Sperrliste;
 use Peppermint\MassMailer\Listeners\ProtokolliertVersand;
 use Peppermint\MassMailer\Services\MailgunKonto;
 use Peppermint\MassMailer\Services\MailgunZustellabgleich;
 use Peppermint\MassMailer\Services\Mailmessung;
+use Peppermint\MassMailer\Services\MailserverAufloeser;
+use Peppermint\MassMailer\Services\Versandplan;
 use Peppermint\MassMailer\Services\Versandprotokoll;
+use Peppermint\MassMailer\Services\VersandtempoAufloeser;
+use Peppermint\MassMailer\Support\EinstufigeKaskade;
 use Peppermint\MassMailer\Support\MailgunzugangAusConfig;
 
 class MassMailerServiceProvider extends ServiceProvider
@@ -29,6 +34,11 @@ class MassMailerServiceProvider extends ServiceProvider
         // Plattformeinstellungen), einfach vorher etwas anderes binden kann.
         $this->app->bindIf(Mailgunzugang::class, MailgunzugangAusConfig::class);
 
+        // Die Vorgabe ist eine Kaskade mit genau einer Stufe: dem Bereich
+        // selbst. Damit laeuft das Paket ohne jede Bindung, und eine Anwendung
+        // mit Hierarchie bindet ihre eigene.
+        $this->app->bindIf(Kaskade::class, EinstufigeKaskade::class);
+
         $this->app->singleton(Mailmessung::class);
 
         // Die beiden Vertraege sind OPTIONAL. Ohne sie funktioniert das
@@ -40,6 +50,10 @@ class MassMailerServiceProvider extends ServiceProvider
             $app->bound(Sperrliste::class) ? $app->make(Sperrliste::class) : null,
             $app->make(Mailmessung::class),
         ));
+
+        $this->app->singleton(MailserverAufloeser::class);
+        $this->app->singleton(VersandtempoAufloeser::class);
+        $this->app->singleton(Versandplan::class);
 
         $this->app->singleton(MailgunKonto::class);
         $this->app->singleton(MailgunZustellabgleich::class);

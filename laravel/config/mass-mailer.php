@@ -17,6 +17,31 @@ return [
     'tabellen' => [
         'protokoll' => 'mail_dispatches',
         'versuche' => 'mail_dispatch_versuche',
+        'postausgaenge' => 'mail_servers',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Versandtempo
+    |--------------------------------------------------------------------------
+    |
+    | Je STUNDE, weil die Grenzen der Anbieter je Stunde gelten (Mailgun
+    | drosselt neue Konten auf 100/Stunde). Stuende die Einstellung in Minuten,
+    | muesste jeder den Wert aus dem Vertrag erst umrechnen — und ein
+    | Tippfehler um den Faktor 60 sieht im Feld aus wie eine gewoehnliche Zahl.
+    |
+    | 60 als Vorgabe: der Wert, der nachweislich durchlaeuft, mit Luft unter
+    | einer 100er-Drosselung fuer die Mails, die nebenher entstehen.
+    |
+    | `spalte` ist der Name des Feldes, in dem eine Ebene der Kaskade ihr
+    | eigenes Tempo haelt. Fehlt es an einem Modell, uebernimmt die naechste
+    | Stufe — nicht jede Ebene muss das Tempo kennen.
+    |
+    */
+
+    'tempo' => [
+        'pro_stunde' => (int) env('MASS_MAILER_PRO_STUNDE', 60),
+        'spalte' => env('MASS_MAILER_TEMPO_SPALTE', 'mail_rate_per_hour'),
     ],
 
     /*

@@ -5,7 +5,7 @@ namespace Peppermint\MassMailer\Support;
 use Illuminate\Database\Schema\Blueprint;
 
 /**
- * Die Form der beiden Protokolltabellen — an einer Stelle.
+ * Die Form der Tabellen des Pakets — an einer Stelle.
  *
  * **Bewusst KEINE Paket-Migration.** Genau wie beim Baukasten gilt: Der Host
  * besitzt seine Tabellen. Ein Paket, das beim `composer update` still eine
@@ -41,6 +41,8 @@ class MassMailerSchema
     public const TABELLE_PROTOKOLL = 'mail_dispatches';
 
     public const TABELLE_VERSUCHE = 'mail_dispatch_versuche';
+
+    public const TABELLE_POSTAUSGAENGE = 'mail_servers';
 
     /**
      * Die Protokolltabelle: eine Zeile je verschickter Mail.
@@ -195,5 +197,49 @@ class MassMailerSchema
         $table->timestamps();
 
         $table->index(['mail_dispatch_id', 'nummer'], 'versuch_je_zeile');
+    }
+
+    /**
+     * Die Postausgaenge: ein eigener SMTP-Zugang je Ebene der Kaskade.
+     *
+     * `unique(owner_type, owner_id)`: eine Ebene hat hoechstens einen eigenen
+     * Postausgang. Mehrere waeren keine Einstellung mehr, sondern eine Auswahl
+     * — und die muesste jemand treffen.
+     *
+     * Von Hand statt `morphs()`: das legte einen zweiten Index auf dieselben
+     * beiden Spalten, die der eindeutige Index schon abdeckt.
+     */
+    public static function postausgangTabelle(Blueprint $table): void
+    {
+        $table->id();
+
+        $table->string('owner_type');
+        $table->unsignedBigInteger('owner_id');
+
+        $table->string('host');
+        $table->unsignedSmallInteger('port')->default(587);
+
+        // 'tls', 'ssl' oder null (unverschluesselt). Kein Enum, weil Symfony
+        // die Liste vorgibt und nicht diese Migration.
+        $table->string('encryption')->nullable();
+
+        // `text` und nicht `string`: Beide Werte sind verschluesselt
+        // abgelegt, und der Geheimtext ist deutlich laenger als das Original.
+        $table->text('username')->nullable();
+        $table->text('password')->nullable();
+
+        // Ein fremder Postausgang nimmt eine Mail meist nur an, wenn sie von
+        // einer seiner eigenen Adressen kommt — der Absender gehoert deshalb zu
+        // den Zugangsdaten und nicht in die Weltkonfiguration.
+        $table->string('from_address')->nullable();
+        $table->string('from_name')->nullable();
+
+        // Abschalten, ohne die Zugangsdaten zu verlieren: die Mail geht dann
+        // wieder den Weg der naechsten Stufe.
+        $table->boolean('is_active')->default(true);
+
+        $table->timestamps();
+
+        $table->unique(['owner_type', 'owner_id']);
     }
 }
