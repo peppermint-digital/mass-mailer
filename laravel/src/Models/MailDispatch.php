@@ -5,6 +5,7 @@ namespace Peppermint\MassMailer\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Peppermint\MassMailer\Support\Mandant;
 use Peppermint\MassMailer\Support\MassMailerSchema;
 use Peppermint\MassMailer\Support\Modelle;
 
@@ -89,6 +90,20 @@ class MailDispatch extends Model
         'zustellung_geprueft_am',
         'anbieter_message_id',
     ];
+
+    /**
+     * Heisst die Mandantenspalte anders, gehoert sie trotzdem hierher.
+     *
+     * `mandant_id` bleibt in der Liste: Ein Host, der beides in derselben
+     * Datenbank hat (etwa waehrend eines Umzugs), soll nicht an einer
+     * Massenzuweisung scheitern, die ins Leere zeigt.
+     *
+     * @return array<int, string>
+     */
+    public function getFillable(): array
+    {
+        return array_values(array_unique([...parent::getFillable(), Mandant::spalte()]));
+    }
 
     protected function casts(): array
     {

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Mail;
 use Peppermint\MassMailer\Models\Versandkampagne;
 use Peppermint\MassMailer\Support\Empfaenger;
 use Peppermint\MassMailer\Support\Kampagnenentwurf;
+use Peppermint\MassMailer\Support\Mandant;
 use Peppermint\MassMailer\Support\Modelle;
 
 /**
@@ -107,7 +108,7 @@ class Massenversand
         $kampagne = Modelle::kampagne();
 
         return $kampagne::create([
-            'mandant_id' => $entwurf->mandantId ?? $this->mandantAusBereich($entwurf),
+            Mandant::spalte() => $entwurf->mandantId ?? $this->mandantAusBereich($entwurf),
             'bereich_typ' => $entwurf->bereich?->getMorphClass(),
             'bereich_id' => $entwurf->bereich?->getKey(),
             'vorlage_id' => $entwurf->vorlageId,
@@ -134,10 +135,7 @@ class Massenversand
             return null;
         }
 
-        $spalte = config('mass-mailer.mandant.spalte');
-        $spalte = is_string($spalte) && $spalte !== '' ? $spalte : 'organization_id';
-
-        $wert = $entwurf->bereich->getAttribute($spalte);
+        $wert = $entwurf->bereich->getAttribute(Mandant::ableitenAus());
 
         return $wert === null ? null : (int) $wert;
     }

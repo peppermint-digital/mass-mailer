@@ -76,7 +76,7 @@ class MassMailerSchema
     {
         $table->id();
 
-        $table->unsignedBigInteger('mandant_id')->nullable();
+        $table->unsignedBigInteger(Mandant::spalte())->nullable();
 
         $table->string('bereich_typ')->nullable();
         $table->unsignedBigInteger('bereich_id')->nullable();
@@ -278,7 +278,7 @@ class MassMailerSchema
     {
         $table->id();
 
-        $table->unsignedBigInteger('mandant_id')->nullable();
+        $table->unsignedBigInteger(Mandant::spalte())->nullable();
 
         $table->string('bereich_typ')->nullable();
         $table->unsignedBigInteger('bereich_id')->nullable();

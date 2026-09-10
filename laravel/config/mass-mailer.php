@@ -31,15 +31,24 @@ return [
     | Mandant
     |--------------------------------------------------------------------------
     |
-    | Nennt ein Kampagnenentwurf keinen Mandanten, versucht das Paket ihn aus
-    | diesem Feld des Bereichs zu lesen. In Connect heisst es
-    | `organization_id`, anderswo anders. Fehlt es, bleibt der Mandant leer —
-    | eine Kampagne ohne Mandant ist besser als eine mit dem falschen.
+    | Zwei verschiedene Dinge, die leicht verwechselt werden: `spalte` ist der
+    | Name des Feldes in den Tabellen dieses Pakets, `ableiten_aus` das Feld am
+    | Bereich, aus dem der Mandant gelesen wird, wenn ein Kampagnenentwurf ihn
+    | nicht selbst nennt. Fehlt es, bleibt der Mandant leer — eine Kampagne
+    | ohne Mandant ist besser als eine mit dem falschen.
     |
     */
 
     'mandant' => [
-        'spalte' => env('MASS_MAILER_MANDANT_SPALTE', 'organization_id'),
+        // Wie das Feld in den Tabellen DIESES Pakets heisst. Frei, weil der
+        // Mandant dem Host gehoert: Connects `BelongsToOrganization` ist fest
+        // auf `organization_id` verdrahtet, und dafuer ein ganzes
+        // Tenancy-System umzubauen waere der falsche Preis fuer einen Namen.
+        'spalte' => env('MASS_MAILER_MANDANT_SPALTE', 'mandant_id'),
+
+        // Woraus der Mandant abgeleitet wird, wenn ein Kampagnenentwurf ihn
+        // nicht selbst nennt — ein Feld am Bereich.
+        'ableiten_aus' => env('MASS_MAILER_MANDANT_QUELLE', 'organization_id'),
     ],
 
     /*

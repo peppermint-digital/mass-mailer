@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Peppermint\MassMailer\Support\Empfaenger;
+use Peppermint\MassMailer\Support\Mandant;
 use Peppermint\MassMailer\Support\MassMailerSchema;
 use Peppermint\MassMailer\Support\Metadatenschluessel;
 use Peppermint\MassMailer\Support\Modelle;
@@ -36,6 +37,20 @@ class Versandkampagne extends Model
         'empfaenger_anzahl',
         'gestartet_am',
     ];
+
+    /**
+     * Heisst die Mandantenspalte anders, gehoert sie trotzdem hierher.
+     *
+     * `mandant_id` bleibt in der Liste: Ein Host, der beides in derselben
+     * Datenbank hat (etwa waehrend eines Umzugs), soll nicht an einer
+     * Massenzuweisung scheitern, die ins Leere zeigt.
+     *
+     * @return array<int, string>
+     */
+    public function getFillable(): array
+    {
+        return array_values(array_unique([...parent::getFillable(), Mandant::spalte()]));
+    }
 
     protected function casts(): array
     {
@@ -87,7 +102,7 @@ class Versandkampagne extends Model
         $werte = array_filter([
             Metadatenschluessel::ART => MailDispatch::ART_MASSE,
             Metadatenschluessel::KAMPAGNE => (string) $this->id,
-            Metadatenschluessel::MANDANT => $this->zeichen($this->mandant_id),
+            Metadatenschluessel::MANDANT => $this->zeichen($this->getAttribute(Mandant::spalte())),
             Metadatenschluessel::BEREICH_TYP => $this->bereich_typ,
             Metadatenschluessel::BEREICH => $this->zeichen($this->bereich_id),
             Metadatenschluessel::AUSGELOEST_VON => $this->zeichen($this->ausgeloest_von_id),

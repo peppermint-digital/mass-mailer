@@ -7,6 +7,7 @@ use Peppermint\MassMailer\Contracts\Bezugsaufloeser;
 use Peppermint\MassMailer\Contracts\Sperrliste;
 use Peppermint\MassMailer\Models\MailDispatch;
 use Peppermint\MassMailer\Models\MailDispatchVersuch;
+use Peppermint\MassMailer\Support\Mandant;
 use Peppermint\MassMailer\Support\Metadatenschluessel;
 use Peppermint\MassMailer\Support\Modelle;
 use Peppermint\MassMailer\Support\Zustellfehler;
@@ -384,7 +385,7 @@ class Versandprotokoll
         $bezug = $this->bezug($metadaten, $empfaenger);
 
         return [
-            'mandant_id' => $this->zahl($metadaten[Metadatenschluessel::MANDANT] ?? null),
+            Mandant::spalte() => $this->zahl($metadaten[Metadatenschluessel::MANDANT] ?? null),
             'bereich_typ' => $metadaten[Metadatenschluessel::BEREICH_TYP] ?? null,
             'bereich_id' => $this->zahl($metadaten[Metadatenschluessel::BEREICH] ?? null),
             'bezug_typ' => $bezug['typ'],

@@ -164,6 +164,27 @@ Bestätigung ihre eigene Zeile nicht wiederfinden lassen, und der Eintrag bliebe
 auf „im Versand". Beim **Anlegen** gilt das Gegenteil: Da soll der Haken der Anwendung
 greifen und den Mandanten eintragen — deshalb geht das Anlegen den normalen Weg.
 
+## Die Mandantenspalte gehört dir
+
+`mass-mailer.mandant.spalte` bestimmt, wie das Mandantenfeld in den Tabellen des
+Pakets heißt (Vorgabe `mandant_id`). Wer schon ein Tenancy-System hat, trägt dessen
+Namen ein und muss nichts umbenennen:
+
+```php
+'mandant' => [
+    'spalte' => 'organization_id',       // in den Tabellen dieses Pakets
+    'ableiten_aus' => 'organization_id', // am Bereich, wenn der Entwurf schweigt
+],
+```
+
+Der Fall dahinter: Connects `BelongsToOrganization` ist fest auf `organization_id`
+verdrahtet — er filtert danach und trägt beim Anlegen dort ein. Hätte das Paket auf
+`mandant_id` bestanden, wäre die Wahl gewesen: Mandantentrennung im Protokoll aufgeben
+oder das ganze Tenancy-System anfassen. Für einen Spaltennamen.
+
+Dieselbe Überlegung wie bei `owner_type` am Postausgang: **Was schon dem Host gehört,
+wird nicht umbenannt.**
+
 ## Zwei Dinge, die man beim Einziehen falsch machen kann
 
 **Der Mailgun-Variablenschlüssel.** Unter ihm reist die Nummer der Protokollzeile mit;
