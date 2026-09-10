@@ -42,5 +42,24 @@ abstract class TestCase extends Basis
         Schema::create(MassMailerSchema::TABELLE_POSTAUSGAENGE, function (Blueprint $table): void {
             MassMailerSchema::postausgangTabelle($table);
         });
+
+        Schema::create(MassMailerSchema::TABELLE_KAMPAGNEN, function (Blueprint $table): void {
+            MassMailerSchema::kampagnenTabelle($table);
+        });
+
+        // Die Warteschlange als echte Tabelle. Klingt nach Aufwand fuer einen
+        // Test, ist aber die einzige Art, die Staffelung zu BEWEISEN:
+        // `Mail::fake()` verwirft die Verzoegerung, und `Queue::fake()` auch —
+        // beide leiten `later()` auf `queue()` um. Wer die Staffelung gegen
+        // eine Attrappe prueft, prueft seine eigene Vorstellung.
+        Schema::create('jobs', function (Blueprint $table): void {
+            $table->id();
+            $table->string('queue')->index();
+            $table->longText('payload');
+            $table->unsignedTinyInteger('attempts');
+            $table->unsignedInteger('reserved_at')->nullable();
+            $table->unsignedInteger('available_at');
+            $table->unsignedInteger('created_at');
+        });
     }
 }

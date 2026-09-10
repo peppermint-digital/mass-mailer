@@ -18,9 +18,10 @@ unabhängig voneinander benutzbar und ergänzen sich, wo beide da sind.
 | **Öffnungen und Klicks** | Zählpixel und Klick-Umleitung, je Mail schaltbar, standardmäßig aus. |
 | **Eigener Postausgang** | Ein SMTP-Zugang je Ebene der Kaskade, Zugangsdaten verschlüsselt. Abgeschaltete Einträge fallen auf die nächste Stufe zurück. |
 | **Drosselung** | Versandtempo je Stunde über dieselbe Kaskade, gleichmäßig über die Stunde verteilt — und kampagnenübergreifend reserviert, damit sich zwei Versendungen nicht überholen. |
+| **Kampagnen** | Was an wen rausging und was tatsächlich drinstand — eine Kopie zum Zeitpunkt des Versands, keine Referenz auf die Vorlage. |
 
-**Noch nicht drin** (kommt in den nächsten Stufen): Kampagnen, Oberflächen-Stubs,
-Newsletter mit An- und Abmeldung.
+**Noch nicht drin** (kommt in den nächsten Stufen): Oberflächen-Stubs, Newsletter mit
+An- und Abmeldung.
 
 ## Warum die Klassennamen deutsch sind
 
@@ -171,29 +172,74 @@ Zu den Zahlen: **Klicks** sind eine Handlung des Empfängers und damit belastbar
 Gmail über einen Proxy, andere Programme laden sie gar nicht. Die Zahl liegt systematisch
 zu hoch *und* zu niedrig, je nach Postfach. Wer sie anzeigt, sollte das dazusagen.
 
-## Drosselung benutzen
+## Eine Kampagne verschicken
 
 ```php
-$plan = app(Versandplan::class);
+$kampagne = app(Massenversand::class)->verschicken(
+    new Kampagnenentwurf(
+        betreff: $betreff,
+        rumpf: $rumpf,
+        bereich: $event,
+        filter: ['typ' => 'status', 'wert' => 'invited'],
+        vorlageId: $vorlage?->id,
+        ausgeloestVonId: auth()->id(),
+    ),
+    $registrations->map(fn ($r) => new Empfaenger(
+        adresse: $r->email,
+        platzhalter: $r->platzhalter(),
+        bezug: $r,
+    )),
+    fn (Empfaenger $person, Versandkampagne $kampagne) => new Rundmail($person, $kampagne),
+);
+```
 
-$start = $plan->reservieren($event, $empfaenger->count());
-$proStunde = $plan->proStunde($event);
+Der Dienst legt die Kampagnenzeile an, **bevor** er einreiht — damit jede Mail ihre
+Nummer mitnehmen kann. Sonst ließe sich im Protokoll nicht sagen, zu welchem Versand
+eine Zeile gehört, und genau danach sucht hinterher jemand.
 
-foreach ($empfaenger as $i => $person) {
-    Mail::to($person->email)->later(
-        $start->addSeconds($plan->versatzInSekunden($i, $proStunde)),
-        new Rundmail(...),
+Eingereiht wird gestaffelt über den `Versandplan`. Der merkt sich je **Postausgang**,
+bis wann belegt ist, und die nächste Kampagne setzt dort an. Der Schlüssel hängt bewusst
+am Mailserver und nicht am Bereich: Das Limit gehört dem Server. Zwei Bereiche, die sich
+einen teilen, teilen sich das Kontingent — zwei mit eigenen Servern stehen sich nicht im
+Weg.
+
+Empfänger ohne Adresse werden übersprungen und nicht mitgezählt. Eine leere Adresse ist
+kein Fehler, sondern ein Alltagsfall.
+
+### Die Mail übernimmt die Metadaten aus der Kampagne
+
+```php
+public function envelope(): Envelope
+{
+    return new Envelope(
+        subject: $this->kampagne->betreff,
+        metadata: $this->kampagne->metadaten($this->person),
     );
 }
 ```
 
-`reservieren()` merkt sich je **Postausgang**, bis wann eingereiht ist, und die nächste
-Kampagne setzt dort an. Der Schlüssel hängt bewusst am Mailserver und nicht am Bereich:
-Das Limit gehört dem Server. Zwei Bereiche, die sich einen teilen, teilen sich das
-Kontingent — zwei mit eigenen Servern stehen sich nicht im Weg.
+`metadaten()` liegt im Paket, weil dieser Code in jeder Anwendung gleich aussehen würde
+— und weil er leise falsch wird, wenn ihn jemand von Hand schreibt: Eine vergessene
+Kampagnennummer löst keinen Fehler aus, sie löst nur eine Auswertung auf, die später
+jemand vermisst.
 
-`proStunde()` einmal holen und durchreichen, nicht je Empfänger nachschlagen — sonst
-läuft pro Mail eine Abfrage über die ganze Kaskade.
+### Warum Empfängerliste und Mailable von außen kommen
+
+Wer die Empfänger sind, weiß nur die Anwendung — in Connect Anmeldungen nach Status oder
+Gruppe, im CRM Leads in einer Phase. Und wie die Mail aussieht, weiß das Paket erst
+recht nicht. Dafür je einen Vertrag zu bauen hieße, eine Abfrage durch eine Schnittstelle
+zu reichen, die nichts damit anfangen kann.
+
+## Nur die Drosselung benutzen
+
+Wer die Kampagnenzeile nicht braucht, kann den `Versandplan` direkt nehmen:
+
+```php
+$start = $plan->reservieren($event, $empfaenger->count());
+$proStunde = $plan->proStunde($event);   // einmal holen, nicht je Empfänger —
+                                          // sonst läuft pro Mail eine Abfrage
+                                          // über die ganze Kaskade
+```
 
 ## Zustellabgleich einplanen
 

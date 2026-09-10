@@ -44,6 +44,8 @@ class MassMailerSchema
 
     public const TABELLE_POSTAUSGAENGE = 'mail_servers';
 
+    public const TABELLE_KAMPAGNEN = 'mass_email_campaigns';
+
     /**
      * Die Protokolltabelle: eine Zeile je verschickter Mail.
      *
@@ -241,5 +243,46 @@ class MassMailerSchema
         $table->timestamps();
 
         $table->unique(['owner_type', 'owner_id']);
+    }
+
+    /**
+     * Die Kampagnen: was an viele rausging.
+     *
+     * `betreff` und `rumpf` sind eine Kopie zum Zeitpunkt des Versands, auch
+     * wenn sie aus einer Vorlage stammen — die Historie muss zeigen, was
+     * verschickt WURDE, nicht was in der Vorlage inzwischen steht.
+     *
+     * `empfaenger_anzahl` ist die Zahl beim Einreihen und beantwortet damit
+     * eine andere Frage als das Protokoll: „an wie viele war es gedacht?"
+     * gegen „bei wie vielen hat es geklappt?". Die zweite steht in
+     * {@see self::protokollTabelle()}, und die beiden duerfen auseinandergehen
+     * — genau das ist die interessante Information.
+     */
+    public static function kampagnenTabelle(Blueprint $table): void
+    {
+        $table->id();
+
+        $table->unsignedBigInteger('mandant_id')->nullable();
+
+        $table->string('bereich_typ')->nullable();
+        $table->unsignedBigInteger('bereich_id')->nullable();
+
+        $table->unsignedBigInteger('vorlage_id')->nullable();
+        $table->unsignedBigInteger('ausgeloest_von_id')->nullable();
+
+        $table->string('betreff');
+        $table->longText('rumpf');
+
+        // Wie die Empfaenger ausgewaehlt wurden. Zum Nachvollziehen, nicht zum
+        // Wiederholen: Der Bestand hat sich seither geaendert, und derselbe
+        // Filter traefe heute andere Leute.
+        $table->json('filter')->nullable();
+
+        $table->unsignedInteger('empfaenger_anzahl')->default(0);
+        $table->timestamp('gestartet_am')->nullable();
+
+        $table->timestamps();
+
+        $table->index(['bereich_typ', 'bereich_id', 'gestartet_am'], 'kampagne_bereich');
     }
 }

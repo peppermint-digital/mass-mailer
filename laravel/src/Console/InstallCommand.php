@@ -53,10 +53,11 @@ class InstallCommand extends Command
         $protokoll = (string) config('mass-mailer.tabellen.protokoll', 'mail_dispatches');
         $versuche = (string) config('mass-mailer.tabellen.versuche', 'mail_dispatch_versuche');
         $postausgaenge = (string) config('mass-mailer.tabellen.postausgaenge', 'mail_servers');
+        $kampagnen = (string) config('mass-mailer.tabellen.kampagnen', 'mass_email_campaigns');
 
         $stub = str_replace(
-            ['{{ protokoll }}', '{{ versuche }}', '{{ postausgaenge }}'],
-            [$protokoll, $versuche, $postausgaenge],
+            ['{{ protokoll }}', '{{ versuche }}', '{{ postausgaenge }}', '{{ kampagnen }}'],
+            [$protokoll, $versuche, $postausgaenge, $kampagnen],
             File::get(__DIR__.'/../../stubs/migration.php.stub'),
         );
 

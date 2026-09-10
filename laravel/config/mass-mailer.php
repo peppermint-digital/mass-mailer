@@ -18,6 +18,23 @@ return [
         'protokoll' => 'mail_dispatches',
         'versuche' => 'mail_dispatch_versuche',
         'postausgaenge' => 'mail_servers',
+        'kampagnen' => 'mass_email_campaigns',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mandant
+    |--------------------------------------------------------------------------
+    |
+    | Nennt ein Kampagnenentwurf keinen Mandanten, versucht das Paket ihn aus
+    | diesem Feld des Bereichs zu lesen. In Connect heisst es
+    | `organization_id`, anderswo anders. Fehlt es, bleibt der Mandant leer —
+    | eine Kampagne ohne Mandant ist besser als eine mit dem falschen.
+    |
+    */
+
+    'mandant' => [
+        'spalte' => env('MASS_MAILER_MANDANT_SPALTE', 'organization_id'),
     ],
 
     /*

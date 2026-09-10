@@ -17,6 +17,7 @@ use Peppermint\MassMailer\Services\MailgunKonto;
 use Peppermint\MassMailer\Services\MailgunZustellabgleich;
 use Peppermint\MassMailer\Services\Mailmessung;
 use Peppermint\MassMailer\Services\MailserverAufloeser;
+use Peppermint\MassMailer\Services\Massenversand;
 use Peppermint\MassMailer\Services\Versandplan;
 use Peppermint\MassMailer\Services\Versandprotokoll;
 use Peppermint\MassMailer\Services\VersandtempoAufloeser;
@@ -54,6 +55,7 @@ class MassMailerServiceProvider extends ServiceProvider
         $this->app->singleton(MailserverAufloeser::class);
         $this->app->singleton(VersandtempoAufloeser::class);
         $this->app->singleton(Versandplan::class);
+        $this->app->singleton(Massenversand::class);
 
         $this->app->singleton(MailgunKonto::class);
         $this->app->singleton(MailgunZustellabgleich::class);
